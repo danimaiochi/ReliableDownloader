@@ -14,9 +14,9 @@ namespace ReliableDownloader
     {
         private byte[] _remoteFileMd5;
         private long _remoteFileSize;
-        //private long _chunkSize = 1000; // maybe do some math to find a sweet spot
         private readonly long _chunkSize;
         private readonly bool _debug = false;
+        private bool _cancelled = false;
 
         public FileDownloader(long chunkSize = 100000)
         {
@@ -43,13 +43,21 @@ namespace ReliableDownloader
                         return true;
                     }
 
+                    // if the remote and the local have the same size, maybe the file is completed, maybe is another one and it is a coincidence, shall we delete? shall we assume it's all ok?
+                    if (existingFile.Length == _remoteFileSize)
+                    {
+                        return true;
+                    }
+
                     // otherwise we start downloading from where it stopped
                     startsFrom = existingFile.Length;
                 }
             }
+
             await DownloadPartial(contentFileUrl, localFilePath, startsFrom);
 
-            if (_remoteFileMd5.SequenceEqual(GetFileMd5(localFilePath)))
+            // after it finishes, we just make a check, if we can't check the MD5 we just assume it's ok
+            if (_remoteFileMd5 == null || _remoteFileMd5.SequenceEqual(GetFileMd5(localFilePath)))
             {
                 return true;
             }
@@ -57,9 +65,10 @@ namespace ReliableDownloader
             return false;
         }
 
+
         public void CancelDownloads()
         {
-            throw new NotImplementedException();
+            _cancelled = true;
         }
 
         private FileInfo GetExistingFile(string filePath)
@@ -84,6 +93,11 @@ namespace ReliableDownloader
 
         private async Task DownloadPartial(string fileUrl, string fileLocation, long from = 0)
         {
+            if (_cancelled)
+            {
+                return;
+            }
+
             var httpWebRequest = (HttpWebRequest)WebRequest.Create(fileUrl);
             httpWebRequest.Method = "GET";
 
@@ -124,7 +138,7 @@ namespace ReliableDownloader
                 }
             }
 
-            if (to < _remoteFileSize)
+            if (to < _remoteFileSize-1)
             {
                 await DownloadPartial(fileUrl, fileLocation, to+1);
             }

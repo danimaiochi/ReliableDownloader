@@ -13,7 +13,9 @@ namespace ReliableDownloader
             var exampleFilePath = "D:/Projects/ReliableDownloader-main/myfirstdownload.msi";
 
             var fileDownloader = new FileDownloader();
+            Console.WriteLine($"Will start");
             await fileDownloader.DownloadFile(exampleUrl, exampleFilePath, progress => { Console.WriteLine($"Percent progress is {progress.ProgressPercent}"); });
+            Console.WriteLine($"Finished");
         }
     }
 }
