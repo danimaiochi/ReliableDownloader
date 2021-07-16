@@ -9,11 +9,9 @@ namespace ReliableDownloader
         public static async Task Main(string[] args)
         {
             // If this url 404's, you can get a live one from https://installerstaging.accurx.com/chain/latest.json.
-            //var exampleUrl = "https://installerstaging.accurx.com/chain/3.55.11050.0/accuRx.Installer.Local.msi";
-            //var exampleFilePath = "D:/Projects/ReliableDownloader-main/myfirstdownload.msi";
+            var exampleUrl = "https://installerstaging.accurx.com/chain/3.55.11050.0/accuRx.Installer.Local.msi";
+            var exampleFilePath = "D:/Projects/ReliableDownloader-main/myfirstdownload.msi";
 
-            var exampleUrl = "https://pbs.twimg.com/media/E6V4xTxVkAUrVYB?format=jpg&name=900x900";
-            var exampleFilePath = "D:/Projects/ReliableDownloader-main/picture.jpg";
             var fileDownloader = new FileDownloader();
             await fileDownloader.DownloadFile(exampleUrl, exampleFilePath, progress => { Console.WriteLine($"Percent progress is {progress.ProgressPercent}"); });
         }

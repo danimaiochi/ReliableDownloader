@@ -15,14 +15,19 @@ namespace ReliableDownloader
         private byte[] _remoteFileMd5;
         private long _remoteFileSize;
         //private long _chunkSize = 1000; // maybe do some math to find a sweet spot
-        private long _chunkSize = 100000;
-        private bool _debug = false;
+        private readonly long _chunkSize;
+        private readonly bool _debug = false;
+
+        public FileDownloader(long chunkSize = 100000)
+        {
+            _chunkSize = chunkSize;
+        }
+
         public async Task<bool> DownloadFile(string contentFileUrl, string localFilePath, Action<FileProgress> onProgressChanged)
         {
             var remoteFileInfo = GetRemoteFileInformation(contentFileUrl);
             _remoteFileMd5 = remoteFileInfo.md5;
             _remoteFileSize = remoteFileInfo.size;
-
 
             long startsFrom = 0;
 
@@ -39,10 +44,10 @@ namespace ReliableDownloader
                     }
 
                     // otherwise we start downloading from where it stopped
-                    startsFrom = existingFile.Length -2;
+                    startsFrom = existingFile.Length;
                 }
             }
-            DownloadPartial(contentFileUrl, localFilePath, startsFrom);
+            await DownloadPartial(contentFileUrl, localFilePath, startsFrom);
 
             if (_remoteFileMd5.SequenceEqual(GetFileMd5(localFilePath)))
             {
@@ -94,14 +99,14 @@ namespace ReliableDownloader
                     {
                         using (var fileStream = new FileStream(fileLocation, FileMode.Append))
                         {
-                            httpWebResponse.GetResponseStream().CopyTo(fileStream);
+                            httpWebResponse?.GetResponseStream()?.CopyTo(fileStream);
                         }
                     }
                     else
                     {
                         using (var memoryStream = new MemoryStream())
                         {
-                            httpWebResponse.GetResponseStream().CopyTo(memoryStream);
+                            httpWebResponse?.GetResponseStream()?.CopyTo(memoryStream);
 
                             Console.WriteLine($"ms = {string.Join(' ', memoryStream.ToArray())}");
                         }
@@ -115,7 +120,7 @@ namespace ReliableDownloader
                 {
                     // the file found on your system is bigger than the file you're downloading, and isn't the full file, so let's delete and download from 0
                     File.Delete(fileLocation);
-                    DownloadPartial(fileUrl, fileLocation);
+                    await DownloadPartial(fileUrl, fileLocation);
                 }
             }
 
