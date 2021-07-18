@@ -17,6 +17,7 @@ namespace ReliableDownloader
         private readonly long _chunkSize;
         private readonly bool _debug = false;
         private bool _cancelled = false;
+        private Action<FileProgress> _onProgressChanged;
 
         public FileDownloader(long chunkSize = 100000)
         {
@@ -28,6 +29,8 @@ namespace ReliableDownloader
             var remoteFileInfo = GetRemoteFileInformation(contentFileUrl);
             _remoteFileMd5 = remoteFileInfo.md5;
             _remoteFileSize = remoteFileInfo.size;
+
+            _onProgressChanged = onProgressChanged;
 
             long startsFrom = 0;
 
@@ -137,6 +140,8 @@ namespace ReliableDownloader
                     await DownloadPartial(fileUrl, fileLocation);
                 }
             }
+
+            _onProgressChanged(new FileProgress(_remoteFileSize, to, ((double)to / (double)_remoteFileSize), null));
 
             if (to < _remoteFileSize-1)
             {
