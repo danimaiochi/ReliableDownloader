@@ -15,13 +15,12 @@ namespace ReliableDownloader.Tests
         [SetUp]
         public void Setup()
         {
+            File.Delete(_localDir+"image.png");
         }
 
         [Test]
         public async Task DownloadFile_NonExistingSmallFileAndSmallChunks_ShouldCreateFile()
         {
-            File.Delete(_localDir+"image.png");
-
             var fileDownloader = new FileDownloader(1000);
             await fileDownloader.DownloadFile(_smallFileUrl, _localDir + "image.png", progress => Console.WriteLine($"progress: {progress.ProgressPercent}"));
             Assert.True(true);
@@ -30,8 +29,6 @@ namespace ReliableDownloader.Tests
         [Test]
         public async Task DownloadFile_NonExistingSmallFileAndBigChunks_ShouldCreateFile()
         {
-            File.Delete(_localDir+"image.png");
-
             var fileDownloader = new FileDownloader(100000);
             await fileDownloader.DownloadFile(_smallFileUrl, _localDir + "image.png", progress => Console.WriteLine($"progress: {progress.ProgressPercent}"));
             Assert.True(true);
@@ -40,8 +37,6 @@ namespace ReliableDownloader.Tests
         [Test]
         public async Task DownloadFile_ExistingSmallFile_ShouldntCreateFile()
         {
-            File.Delete(_localDir+"image.png");
-
             var fileDownloader = new FileDownloader(100000);
             await fileDownloader.DownloadFile(_smallFileUrl, _localDir + "image.png", progress => Console.WriteLine($"progress: {progress.ProgressPercent}"));
 
@@ -54,6 +49,31 @@ namespace ReliableDownloader.Tests
             var fileCreationTimeAfter = file.CreationTime;
 
             Assert.True(fileCreationTimeBefore == fileCreationTimeAfter);
+        }
+
+        [Test]
+        public async Task DownloadFile_CancellingAndResuming_ShouldContinueDownloading()
+        {
+            var fileDownloader = new FileDownloader(100);
+            await fileDownloader.DownloadFile(_smallFileUrl, _localDir + "image.png", progress =>
+            {
+                // cancel when it gets to 10%
+                if (progress.ProgressPercent >= .1)
+                {
+                    fileDownloader.CancelDownloads();
+                }
+            });
+
+            var file = new FileInfo(_localDir + "image.png");
+            var fileCreationTime = file.CreationTime;
+
+            await fileDownloader.DownloadFile(_smallFileUrl, _localDir + "image.png", progress => { });
+
+            file = new FileInfo(_localDir + "image.png");
+            var fileCreationTimeAfter = file.CreationTime;
+
+            Assert.IsTrue(fileCreationTime == fileCreationTimeAfter);
+
         }
     }
 }

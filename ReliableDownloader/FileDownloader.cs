@@ -29,6 +29,7 @@ namespace ReliableDownloader
             var remoteFileInfo = GetRemoteFileInformation(contentFileUrl);
             _remoteFileMd5 = remoteFileInfo.md5;
             _remoteFileSize = remoteFileInfo.size;
+            _cancelled = false;
 
             _onProgressChanged = onProgressChanged;
 
